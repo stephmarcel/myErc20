@@ -42,12 +42,14 @@ App = {
     content.hide();
 
     // Load account data
-    web3.eth.getCoinbase(function(err, account) {
-      if (err === null) {
-        App.account = account;
-        $("#accountAddress").html("Your Account: " + account);
-      }
-    });
+    if (App.account == '0x0') {
+      web3.eth.getCoinbase(function(err, account) {
+        if (err === null) {
+          App.account = account;
+          $("#accountAddress").html("Your Account: " + account);
+        }
+      });
+  }
 
     // Load contract data
     App.contracts.Election.deployed().then(function(instance) {
@@ -117,6 +119,12 @@ App = {
   });
 },
 
+gotoVoteForm: function(){
+  App.account =  $("#addressfield").val();
+    $("#accountAddress").html("Your Account: " + res);
+    $("#generateAccountModal").modal('hide');
+},
+
 generateAccount: function(){
     //var acc = web3.eth.accounts.create();
     // web3.personal.newAccount('P@ssw0rd').then(function(result) {
@@ -125,8 +133,10 @@ generateAccount: function(){
     //   console.error(err);
     // });
 var electionInstance;
+var password = $("#passwordfield").val();
+var addressGen = document.getElementById('addressfield');
 var from = web3.eth.accounts[0];
-    web3.personal.newAccount('mynewaccount', function(err, res) {
+    web3.personal.newAccount(password, function(err, res) {
       if (err == null) {
         App.account = res;
         console.log("error: "+err);
@@ -134,15 +144,16 @@ var from = web3.eth.accounts[0];
         console.log("App.account: "+ App.account);
         console.log("from:"+ from);
 
+addressGen.value = res;
         // Unlock account
-        web3.personal.unlockAccount(res, 'mynewaccount', 600);
+        web3.personal.unlockAccount(res, password, 1600);
 
         //Transfer 10 ether to the new generate account
         web3.eth.sendTransaction({
           from: from,
           to: res,
           value: web3.toWei(10)
-        },'mynewaccount');//.then(function(receipt) {
+        },password);//.then(function(receipt) {
         //  console.log("trans.:"+ receipt);
           console.log("Balance du compte dest:"+res+"-"+ web3.fromWei(web3.eth.getBalance(res)));
           console.log("Balance du compte exp:"+ from +"-"+web3.fromWei(web3.eth.getBalance(from)));
