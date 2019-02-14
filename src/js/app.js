@@ -35,6 +35,7 @@ App = {
 
   render: function() {
     var electionInstance;
+    var totalVote = 0;
     var loader = $("#loader");
     var content = $("#content");
 
@@ -67,7 +68,7 @@ App = {
           var id = candidate[0];
           var name = candidate[1];
           var voteCount = candidate[2];
-
+          totalVote = totalVote + parseInt(voteCount);
           // Render candidate Result
           var candidateTemplate = "<tr><th>" + id + "</th><td>" + name + "</td><td>" + voteCount + "</td></tr>"
           candidatesResults.append(candidateTemplate);
@@ -88,6 +89,7 @@ App = {
         }
       loader.hide();
       content.show();
+        $("#NbTotalVote").html("Total Vote: " + totalVote);
     }).catch(function(error) {
       console.warn(error);
     });
@@ -122,16 +124,14 @@ App = {
 gotoVoteForm: function(){
   App.account =  $("#addressfield").val();
     $("#accountAddress").html("Your Account: " + res);
+   if (generateAccountModal != null && !generateAccountModal.Closed) {
+     generateAccountModal.location.reload();
+   }
     $("#generateAccountModal").modal('hide');
 },
 
 generateAccount: function(){
-    //var acc = web3.eth.accounts.create();
-    // web3.personal.newAccount('P@ssw0rd').then(function(result) {
-    //   App.account = result;
-    // }).catch(function(err) {
-    //   console.error(err);
-    // });
+
 var electionInstance;
 var password = $("#passwordfield").val();
 var addressGen = document.getElementById('addressfield');
@@ -153,18 +153,11 @@ addressGen.value = res;
           from: from,
           to: res,
           value: web3.toWei(10)
-        },password);//.then(function(receipt) {
-        //  console.log("trans.:"+ receipt);
+        },password);
+
           console.log("Balance du compte dest:"+res+"-"+ web3.fromWei(web3.eth.getBalance(res)));
           console.log("Balance du compte exp:"+ from +"-"+web3.fromWei(web3.eth.getBalance(from)));
-        //});
-        // App.contracts.Election.deployed().then(function(instance) {
-        //   return instance.recharge(from, App.account);
-        // }).then(function(result) {
-        //   App.render();
-        // }).catch(function(err) {
-        //   console.error(err);
-        // });
+
 
         $("#accountAddress").html("Your Account: " + res);
 
@@ -209,29 +202,23 @@ addressGen.value = res;
         }).catch(function(error) {
           console.warn(error);
         });
-
       }
-
-
-        //Transfer 10 ether to this account
-
 });
-  //.then((response) => {
-    //  App.account = add;
-      //console.log(response);
-
-    //});
 
 
-       // App.contracts.Election.deployed().then(function(instance) {
-       //   return instance.recharge(App.account);
-       // }).then(function(result) {
-       //   App.render();
-       // }).catch(function(err) {
-       //   console.error(err);
-       // });
-    //   $("#accountAddress").html("Your Account: " + App.account);
+  },
 
+  getTotalVote: function(){
+    App.contracts.Election.deployed().then(function(instance) {
+      instance.votedEvent({}, {
+        fromBlock: 0,
+        toBlock: 'latest'
+      }).watch(function(error, event) {
+        console.log("event triggered", event)
+        // Reload when a new vote is recorded
+        App.render();
+      });
+    });
   },
 
   addCandidate: function() {
